@@ -17,13 +17,18 @@ import hashlib
 import json
 import time
 import zipfile
+import re
 from pathlib import Path
 
 from um.common import data_dir, die, to_posix
+from um.paths import root_path, within, relative_path, atomic_write
 
 
 def _root(name: str) -> Path:
+    if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,99}", name):
+        die("backup name must contain 1-100 letters, numbers, underscores or hyphens")
     d = data_dir() / "backups" / name
+    root_path(d)
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -31,7 +36,11 @@ def _root(name: str) -> Path:
 def _scan(src: Path) -> dict:
     files = {}
     for p in sorted(src.rglob("*")):
+        root_path(p)
         if p.is_file():
+            relative_path(p.relative_to(src).as_posix())
+            if p.relative_to(src).as_posix() == "_um_manifest.json":
+                die("_um_manifest.json is reserved for snapshot metadata")
             h = hashlib.sha1()
             with open(p, "rb") as f:
                 for chunk in iter(lambda: f.read(1 << 20), b""):
@@ -41,20 +50,24 @@ def _scan(src: Path) -> dict:
 
 
 def create(src: str, name: str | None = None, note: str = "") -> Path:
-    s = Path(to_posix(src)).expanduser()
+    s = root_path(to_posix(src))
     if not s.is_dir():
         die(f"not a folder: {s}")
     name = name or s.name.replace(" ", "-").lower()
+    storage = _root(name).resolve()
+    if s == storage or s in storage.parents or storage in s.parents:
+        die("backup storage must be separate from source")
     files = _scan(s)
     total = sum(f["size"] for f in files.values())
     if total > 20 << 30:
         die(f"{total / 2**30:.1f} GB - too big to snapshot casually; back up the specific subfolder you'll change")
-    stamp = time.strftime("%Y%m%d-%H%M%S")
+    stamp = time.strftime("%Y%m%d-%H%M%S") + f"-{time.time_ns() % 1_000_000_000:09d}"
     out = _root(name) / f"{stamp}.zip"
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+    with zipfile.ZipFile(out, "x", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
         for rel in files:
             z.write(s / rel, rel)
-        z.writestr("_um_manifest.json", json.dumps(dict(source=str(src), created=stamp, note=note, files=files), indent=1))
+        z.writestr("_um_manifest.json", json.dumps(dict(source=str(s), created=stamp, note=note, files=files), indent=1))
+    _manifest(out)  # Detect source changes during snapshot creation before reporting success.
     print(f"{out}  ({len(files)} files, {total / 2**20:.1f} MB)")
     return out
 
@@ -64,8 +77,35 @@ def snapshots(name: str) -> list[Path]:
 
 
 def _manifest(zp: Path) -> dict:
+    root_path(zp)
     with zipfile.ZipFile(zp) as z:
-        return json.loads(z.read("_um_manifest.json"))
+        m = json.loads(z.read("_um_manifest.json"))
+        if not isinstance(m, dict) or not isinstance(m.get("source"), str) or not isinstance(m.get("files"), dict):
+            raise ValueError("invalid snapshot manifest")
+        expected = {"_um_manifest.json", *m["files"]}
+        names = z.namelist()
+        if len(names) != len(set(names)) or set(names) != expected:
+            raise ValueError("snapshot contains duplicate or unlisted entries")
+        if sum(i.file_size for i in z.infolist()) > 20 << 30:
+            raise ValueError("snapshot exceeds 20 GB limit")
+        seen = set()
+        for rel, info in m["files"].items():
+            relative_path(rel)
+            key = rel.casefold()
+            if key in seen or any(key.startswith(k + "/") or k.startswith(key + "/") for k in seen):
+                raise ValueError("snapshot paths collide")
+            seen.add(key)
+            if not isinstance(info, dict) or not isinstance(info.get("size"), int) or info["size"] < 0 or not re.fullmatch(r"[0-9a-f]{40}", str(info.get("sha1", ""))):
+                raise ValueError("invalid snapshot file metadata")
+            if z.getinfo(rel).file_size != info["size"]:
+                raise ValueError("snapshot size mismatch")
+            h = hashlib.sha1()
+            with z.open(rel) as stream:
+                for chunk in iter(lambda: stream.read(1 << 20), b""):
+                    h.update(chunk)
+            if h.hexdigest() != info["sha1"]:
+                raise ValueError("snapshot hash mismatch")
+        return m
 
 
 def diff(name: str, target: str | None = None, snapshot: str | None = None) -> dict:
@@ -87,7 +127,11 @@ def restore(name: str, to: str | None = None, snapshot: str | None = None, clean
     if not zp:
         die(f"no snapshots for {name}")
     m = _manifest(zp)
-    t = Path(to_posix(to or m["source"]))
+    t = root_path(to_posix(to or m["source"]))
+    for rel in m["files"]:
+        within(t, rel)
+    if t == zp.resolve() or t in zp.resolve().parents:
+        die("restore target cannot contain its snapshot archive")
     d = diff(name, str(t), str(zp))
     print(f"restore {zp.name} -> {t}: {len(d['changed'])} changed, {len(d['removed'])} missing, {len(d['added'])} new since"
           + (" (new files will be deleted: --clean)" if clean else " (new files kept)"))
@@ -98,16 +142,16 @@ def restore(name: str, to: str | None = None, snapshot: str | None = None, clean
     t.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zp) as z:
         for rel in m["files"]:
-            (t / rel).parent.mkdir(parents=True, exist_ok=True)
-            with z.open(rel) as src, open(t / rel, "wb") as dst:
-                dst.write(src.read())
+            dst = within(t, rel)
+            with z.open(rel) as src:
+                atomic_write(dst, src.read())
     if clean:
         for rel in d["added"]:
-            (t / rel).unlink(missing_ok=True)
+            within(t, rel).unlink(missing_ok=True)
     print("restored", len(m["files"]), "files")
 
 
-def main(a):
+def _main(a):
     if a.cmd == "create":
         create(a.src, a.name, a.note or "")
     elif a.cmd == "list":
@@ -121,6 +165,13 @@ def main(a):
         print(json.dumps(diff(a.name, a.target, a.snapshot), indent=1))
     elif a.cmd == "restore":
         restore(a.name, a.to, a.snapshot, a.clean, a.yes)
+
+
+def main(a):
+    try:
+        _main(a)
+    except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile) as exc:
+        die(str(exc))
 
 
 def register(sub):

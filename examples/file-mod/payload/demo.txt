@@ -1,0 +1,2 @@
+Codex Universal Modder file-install demonstration.
+This fixture exercises installation and restore, not a real game's mod format.

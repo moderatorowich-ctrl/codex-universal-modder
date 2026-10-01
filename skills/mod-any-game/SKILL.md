@@ -5,8 +5,7 @@ description: Mod a PC game the user owns, taking an idea to working in the real 
 
 # Mod any game
 
-You are the modder. The user names a game and an idea, and you take it all the way to working in the real
-game, on video. The method below shipped three projects:
+Use the canonical codex-modder skill for authorization, assets, tool setup and status. Work toward the user's requested outcome and verify in the real game when available. The upstream author reports three projects; this fork has not reverified them:
 - a Terraria mod (homing missiles, a tactical nuke, new enemies, a boss);
 - a new Age of Empires II civilization with 3D-rendered units;
 - real Minecraft composited into GTA V.
@@ -19,8 +18,8 @@ MW2) showed about scaling up.
 
 ## Your tools
 
-`um` is the toolkit CLI. Plugin installs and clones put it on PATH (it lives at `bin/um` in the repo).
-Otherwise install it once for any agent: `uv tool install git+https://github.com/rehan-remade/universal-modder`
+`um` / `cmod` is the toolkit CLI. Install it separately; plugin installation does not add it to PATH. From a clone use `uv run python -m um` (all platforms) or `bin/cmod.ps1` (Windows).
+Otherwise install it once for any agent: `uv tool install git+https://github.com/moderatorowich-ctrl/codex-universal-modder`
 (or `pipx install ...`). Every group has `--help` with examples.
 
 | Need | Command |
@@ -101,8 +100,7 @@ appears and works, from the log plus a screenshot you actually look at. Only the
 step in the mod's own git repo.
 
 ### 6. Assets (fal-assets and asset-pipeline skills)
-Study the game's own assets first: size, palette, outline, camera angle, facing, frame layout. Then generate
-with `um fal`. Every call is recorded in `fal_manifest.jsonl`. Convert with `um sprite` / `um render3d` into
+Use available Codex image tools, imported original assets, or optional fal. Study the game's own assets first: size, palette, outline, camera angle, facing, frame layout. Then generate with the selected asset tool; fal calls use `um fal`. Every call is recorded in `fal_manifest.jsonl`. Convert with `um sprite` / `um render3d` into
 exactly what the engine loads.
 - **Consistency across many angles and frames:** generate one concept, turn it into 3D
   (`um fal model3d`), then render every heading from the game's camera (`um render3d --preset aoe2`).

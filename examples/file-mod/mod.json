@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "name": "file-mod-demo",
+  "files": [
+    { "source": "payload/demo.txt", "target": "Mods/codex-demo.txt" }
+  ]
+}

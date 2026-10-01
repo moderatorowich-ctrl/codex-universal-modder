@@ -13,3 +13,9 @@ dist/
 .pytest_cache/
 # the parent repo ignores bin/ (build output); the CLI launcher lives here
 !bin/
+
+transactions/
+private/
+evidence/
+recon.json
+plan.json

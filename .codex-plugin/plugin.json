@@ -1,49 +1,32 @@
 {
-  "name": "universal-modder",
-  "version": "0.2.0",
-  "description": "Mod almost any game you own with an AI agent: engine recon, reverse engineering, fal-generated art/3D/audio, in-game testing, showcase videos, and a shared knowledge base of how games were modded.",
+  "name": "codex-universal-modder",
+  "version": "1.0.0",
+  "description": "Codex toolkit for owned single-player PC games: engine recon, mod workflows, assets, tested file transactions and recovery. Compatibility varies by game.",
   "author": {
-    "name": "Rehan",
-    "url": "https://github.com/rehan-remade"
+    "name": "moderatorowich-ctrl",
+    "url": "https://github.com/moderatorowich-ctrl"
   },
-  "homepage": "https://github.com/rehan-remade/universal-modder",
-  "repository": "https://github.com/rehan-remade/universal-modder",
+  "homepage": "https://github.com/moderatorowich-ctrl/codex-universal-modder",
+  "repository": "https://github.com/moderatorowich-ctrl/codex-universal-modder",
   "license": "MIT",
   "keywords": [
+    "codex",
     "game-modding",
-    "modding",
-    "reverse-engineering",
-    "knowledge-base",
-    "tmodloader",
-    "bepinex",
-    "ue4ss",
-    "fal",
-    "sprites",
-    "game-assets",
-    "mcp",
-    "agent-skills"
+    "single-player",
+    "agent-skills",
+    "modding"
   ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "universal-modder",
-    "shortDescription": "Mod any game you own",
-    "longDescription": "Mod almost any game you own with an AI agent: engine recon, reverse engineering, fal-generated art/3D/audio, in-game testing, showcase videos, and a shared knowledge base of how games were modded.",
-    "developerName": "Rehan",
+    "displayName": "Codex Universal Modder",
+    "shortDescription": "Build and test single-player mods",
+    "longDescription": "Codex toolkit for owned single-player PC games: engine recon, mod workflows, assets, tested file transactions and recovery. Compatibility varies by game.",
+    "developerName": "moderatorowich-ctrl",
     "category": "Developer Tools",
-    "capabilities": [
-      "Interactive",
-      "Write"
-    ],
-    "websiteURL": "https://github.com/rehan-remade/universal-modder",
+    "websiteURL": "https://github.com/moderatorowich-ctrl/codex-universal-modder",
     "defaultPrompt": [
-      "Mod this game: add a new weapon with fal-generated sprites",
-      "What engine is this game and how do people mod it?",
-      "Search the modding knowledge base for this game"
-    ],
-    "brandColor": "#B6FF3B",
-    "composerIcon": "./docs/media/logo-128.png",
-    "logo": "./docs/media/logo.png",
-    "screenshots": []
+      "Assess modding support for this game",
+      "Create a single-player mod for my game"
+    ]
   }
 }

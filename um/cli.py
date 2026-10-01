@@ -7,12 +7,16 @@ import sys
 
 from um import __doc__ as DOC, __version__
 
-GROUPS = ["scan", "fal", "sprite", "render3d", "video", "win", "backup", "publish", "kb"]
+GROUPS = ["doctor", "workspace", "mod", "scan", "fal", "sprite", "render3d", "video", "win", "backup", "publish", "kb"]
 
 
 def main(argv=None):
+    # Windows legacy consoles/captured pipes otherwise fail on Unicode game names and notes.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(prog="um", description=DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--version", action="version", version=f"universal-modder {__version__}")
+    ap.add_argument("--version", action="version", version=f"codex-universal-modder {__version__}")
     sub = ap.add_subparsers(dest="group", metavar="<group>")
     for g in GROUPS:
         importlib.import_module(f"um.{g}").register(sub)

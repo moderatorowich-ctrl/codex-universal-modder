@@ -1,18 +1,18 @@
 {
-  "name": "universal-modder",
+  "name": "codex-universal-modder",
   "interface": {
-    "displayName": "universal-modder"
+    "displayName": "Codex Universal Modder"
   },
   "plugins": [
     {
-      "name": "universal-modder",
+      "name": "codex-universal-modder",
       "source": {
-        "source": "url",
-        "url": "https://github.com/rehan-remade/universal-modder.git"
+        "source": "local",
+        "path": "./"
       },
       "policy": {
         "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
+        "authentication": "ON_USE"
       },
       "category": "Developer Tools"
     }

@@ -1,4 +1,5 @@
-# Codex: project-scoped MCP (trusted projects). fal's hosted MCP server, key from $FAL_KEY.
-[mcp_servers.fal]
-url = "https://mcp.fal.ai/mcp"
-bearer_token_env_var = "FAL_KEY"
+# Optional fal integration; core modding needs no fal key.
+# Uncomment only when FAL_KEY is configured in the host process.
+# [mcp_servers.fal]
+# url = "https://mcp.fal.ai/mcp"
+# bearer_token_env_var = "FAL_KEY"

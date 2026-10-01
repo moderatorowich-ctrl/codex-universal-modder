@@ -3,6 +3,7 @@
     uv run --with pytest pytest -q
 """
 import json
+import shutil
 import struct
 import subprocess
 import sys
@@ -141,7 +142,7 @@ def test_cutout_keeps_interior_white():
 def test_fit_and_hard_alpha():
     f = sprite.fit(sprite.cutout(sprite_on_white()), 10, 10, anchor="bottom")
     assert f.size == (10, 10) and f.getbbox()[3] == 10
-    assert set(sprite.hard_alpha(f).getchannel("A").getdata()) <= {0, 255}
+    assert set(sprite.hard_alpha(f).getchannel("A").tobytes()) <= {0, 255}
 
 
 def test_sheet_slice_roundtrip():
@@ -191,12 +192,12 @@ def test_publish_check(tmp_path, capsys):
     assert publish.check(str(tmp_path / "mod"), str(tmp_path / "game")) == 1
     out = capsys.readouterr().out
     assert "game file copied verbatim" in out and "FAL_KEY assignment" in out and "Ghidra auto-name" in out
-    assert "decompiler header x1 in src/Mod.cs" in out and "README.md" not in out.split("decompiler header")[-1].split("\n")[0]
+    assert "decompiler header x1 in src/Mod.cs" in out.replace("\\", "/") and "README.md" not in out.split("decompiler header")[-1].split("\n")[0]
 
 
 # --------------------------------------------------------------------------- video
 
-@pytest.mark.skipif(subprocess.run(["which", "ffmpeg"], capture_output=True).returncode, reason="needs ffmpeg")
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
 def test_compile_small_edl(tmp_path):
     for i, color in enumerate(["red", "blue"]):
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"testsrc2=s=640x360:d=3:r=30", "-f", "lavfi", "-i", "sine=f=440:d=3",
@@ -205,7 +206,7 @@ def test_compile_small_edl(tmp_path):
            "segments": [{"clip": "c0.mp4", "in": 0, "beats": 4, "hook": "Hello"},
                         {"clip": "c1.mp4", "in": 0.5, "beats": 4, "title": "A title", "credit": "@someone", "transition": {"type": "fade", "duration": 0.3}},
                         {"card": {"title": "The end"}, "dur": 1.5}]}
-    (tmp_path / "edl.json").write_text(json.dumps(edl))
+    (tmp_path / "edl.json").write_text(json.dumps(edl), encoding="utf-8")
     video.compile_edl(tmp_path / "edl.json", str(tmp_path / "out.mp4"))
     info = video.probe(tmp_path / "out.mp4")
     assert abs(info["duration"] - (2 + 2 + 1.5)) < 0.15 and info["audio"]
@@ -224,7 +225,7 @@ def test_repo_knowledge_is_valid():
         fails, _ = kb.check_note(p, root)
         assert not fails, (p, fails)
     idx, rows = kb.build_index(root)
-    assert (root / "INDEX.md").read_text() == idx, "run `um kb index`"
+    assert (root / "INDEX.md").read_text(encoding="utf-8") == idx, "run `um kb index`"
     assert len(rows) >= 7
 
 
@@ -236,13 +237,13 @@ def test_kb_new_check_search(tmp_path):
     p = kb.new_note(root, "Hades II", "A new boon god", agent="Codex (gpt-6)", route="loader-api")
     fails, _ = kb.check_note(p, root)
     assert any("unfilled template text" in f for f in fails)          # a fresh scaffold must not pass
-    good = p.read_text()
+    good = p.read_text(encoding="utf-8")
     good = good.replace("FILL IN: exact build", "1.0.1 (Steam)").replace("anti_cheat: FILL IN", "anti_cheat: none")
     good = good.replace("> Two to four sentences: what you built", "> Added a boon god via a Lua mod loader")
     good = good.replace("The most valuable section. Numbered; each one symptom → cause → fix.", "")
     good = good.replace("1. **Symptom.** What you saw. **Cause:** what it really was. **Fix:** what worked.",
                         "1. **Boons never offered.** **Cause:** pool cached at load. **Fix:** register before the run starts.")
-    p.write_text(good)
+    p.write_text(good, encoding="utf-8")
     fails, _ = kb.check_note(p, root)
     assert not fails, fails
     res = kb.search(root, ["boon"])
@@ -254,6 +255,6 @@ def test_kb_check_rejects_secrets_and_dumps(tmp_path):
     note = tmp_path / "n.md"
     code = "\n".join(f"int x{i} = {i};" for i in range(160))
     note.write_text("---\nkind: technique\ntitle: t\ntags: [x]\ndate: 2026-09-30\nagents: [a]\n---\n# t\n"
-                    f"```c\n{code}\n```\n" + "FAL" + "_KEY=abcdefghijklmnopqrstuvwxyz0123\n")
+                    f"```c\n{code}\n```\n" + "FAL" + "_KEY=abcdefghijklmnopqrstuvwxyz0123\n", encoding="utf-8")
     fails, _ = kb.check_note(note)
     assert any("code block" in f for f in fails) and any("FAL_KEY" in f for f in fails)

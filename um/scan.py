@@ -120,7 +120,7 @@ def epic_games() -> list[dict]:
     if base:
         for item in (base / "Epic/EpicGamesLauncher/Data/Manifests").glob("*.item"):
             try:
-                d = json.loads(item.read_text(errors="replace"))
+                d = json.loads(item.read_text(errors="replace", encoding="utf-8"))
             except (json.JSONDecodeError, OSError):
                 continue
             p = to_posix(d.get("InstallLocation", ""))
@@ -428,7 +428,7 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
         info = f"{dd}/app.info" if dd else None
         if info and info in ix.files:
             try:
-                company, product = (ix.path(info).read_text(errors="replace").splitlines() + ["", ""])[:2]
+                company, product = (ix.path(info).read_text(errors="replace", encoding="utf-8").splitlines() + ["", ""])[:2]
                 det.update(company=company, product=product)
             except OSError:
                 pass

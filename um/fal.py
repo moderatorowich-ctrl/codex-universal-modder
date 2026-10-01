@@ -74,11 +74,11 @@ SPRITE_STYLE = ("a single game sprite, the whole subject in frame and centered, 
 def fal_key() -> str:
     k = os.environ.get("FAL_KEY")
     if not k and os.environ.get("FAL_KEY_FILE"):
-        k = Path(os.environ["FAL_KEY_FILE"]).expanduser().read_text().strip()
+        k = Path(os.environ["FAL_KEY_FILE"]).expanduser().read_text(encoding="utf-8").strip()
     if not k:
         for env in (Path.cwd() / ".env", Path(__file__).resolve().parents[1] / ".env"):
             if env.exists():
-                m = re.search(r"^\s*FAL_KEY\s*=\s*['\"]?([^'\"\s]+)", env.read_text(), re.M)
+                m = re.search(r"^\s*FAL_KEY\s*=\s*['\"]?([^'\"\s]+)", env.read_text(encoding="utf-8"), re.M)
                 if m:
                     k = m.group(1)
                     break

@@ -172,7 +172,7 @@ def beats(path) -> dict:
 
 def mux(video, raw_audio, meta_json, out, offset=None):
     """Recorder output (video .mkv + game-only f32le audio + QPC timing json) -> mp4 with synced sound."""
-    meta = json.loads(Path(meta_json).read_text())
+    meta = json.loads(Path(meta_json).read_text(encoding="utf-8"))
     dur = probe(video)["duration"]
     start = offset if offset is not None else meta.get("audio_offset_s", 0.0)
     ff("-i", video, "-f", meta.get("format", "f32le"), "-ar", meta.get("rate", 48000), "-ac", meta.get("channels", 2), "-ss", f"{max(0.0, start):.3f}", "-i", raw_audio,
@@ -410,7 +410,7 @@ def render_segment(i, seg, edl, work: Path, W, H, fps, dur, t_in, t_out, total_n
 
 def compile_edl(edl_path, out, preview=False, keep=False):
     edl_path = Path(edl_path)
-    edl = json.loads(edl_path.read_text())
+    edl = json.loads(edl_path.read_text(encoding="utf-8"))
     base = edl_path.parent
 
     def rel(p):

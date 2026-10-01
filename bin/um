@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# universal-modder CLI launcher. Works from a clone, a Claude Code plugin install, or a PATH symlink.
+# Codex Universal Modder Unix launcher. Invoke from a clone or add bin/ to PATH.
 #   um scan --list | um fal sprite "..." | um sprite cutout in.png out.png | um video compile edl.json out.mp4 ...
 # Uses uv when available (it creates the project's .venv with Pillow + numpy on first run);
 # otherwise the system python3, which then needs `pip install pillow numpy`.

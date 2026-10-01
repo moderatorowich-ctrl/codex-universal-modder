@@ -82,7 +82,7 @@ def check(mod: str, game: str | None = None) -> int:
             warns.append(f"large engine archive ({f.stat().st_size >> 20} MB): {rel} - make sure it holds only your own assets")
         if f.suffix.lower() in TEXT_EXT or f.name in (".env",):
             try:
-                txt = f.read_text(errors="replace")
+                txt = f.read_text(errors="replace", encoding="utf-8")
             except OSError:
                 continue
             for label, rx in SECRET_PATTERNS:
@@ -100,7 +100,7 @@ def check(mod: str, game: str | None = None) -> int:
     manifests = [f for f in files if f.name == "fal_manifest.jsonl"]
     if manifests:
         readmes = [f for f in files if f.name.lower().startswith(("readme", "credits"))]
-        if not any("fal" in f.read_text(errors="replace").lower() for f in readmes):
+        if not any("fal" in f.read_text(errors="replace", encoding="utf-8").lower() for f in readmes):
             warns.append("fal-generated assets (fal_manifest.jsonl) but no credit line in README/CREDITS")
     for x in fails:
         print("FAIL ", x)

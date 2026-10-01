@@ -115,7 +115,7 @@ def setup(args=None):
     out = subprocess.run([ff, "-hide_banner", "-h", "filter=gfxcapture"], capture_output=True, text=True).stdout
     print("ffmpeg", ff, "(gfxcapture ok)" if "gfxcapture" in out else "(WARNING: no gfxcapture in this build)")
     enc = pick_encoder(ff)
-    (d / "config.json").write_text(json.dumps(dict(encoder=enc)))
+    (d / "config.json").write_text(json.dumps(dict(encoder=enc)), encoding="utf-8")
     print("encoder", enc)
 
 
@@ -131,7 +131,7 @@ def pick_encoder(ff: str) -> str:
 
 def encoder() -> str:
     try:
-        return json.loads((local_appdata() / "config.json").read_text())["encoder"]
+        return json.loads((local_appdata() / "config.json").read_text(encoding="utf-8"))["encoder"]
     except (OSError, KeyError, ValueError):
         return "libx264"
 
@@ -275,10 +275,10 @@ class Recorder:
                 self.audio.kill()
             meta.update(self.header, audio=self.base + ".audio.raw", audio_offset_s=round(self.t_video - self.t_audio + self.STARTUP, 3))
         path = Path(to_posix(self.base + ".json"))
-        path.write_text(json.dumps(meta, indent=1))
+        path.write_text(json.dumps(meta, indent=1), encoding="utf-8")
         mkv = Path(to_posix(self.base + ".mkv"))
         if not mkv.exists() or mkv.stat().st_size == 0:
-            err = self.log.read_text(errors="replace").strip()[-600:] if self.log.exists() else ""
+            err = self.log.read_text(errors="replace", encoding="utf-8").strip()[-600:] if self.log.exists() else ""
             print("WARNING: no video frames were captured. gfxcapture only delivers a frame when the window redraws: a game "
                   "that is paused, minimized or showing a static menu produces nothing (and ffmpeg can't react to 'q' until a "
                   "frame arrives). Record while the game is actively rendering." + (f"\nffmpeg: {err}" if err else ""), file=sys.stderr)

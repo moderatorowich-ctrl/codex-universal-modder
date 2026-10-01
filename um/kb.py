@@ -27,7 +27,7 @@ from pathlib import Path
 
 from um.common import data_dir, die
 
-REPO = os.environ.get("UM_KB_REPO", "rehan-remade/universal-modder")
+REPO = os.environ.get("UM_KB_REPO", "moderatorowich-ctrl/codex-universal-modder")
 BRANCH = os.environ.get("UM_KB_BRANCH", "main")
 ROUTES = ["data", "asset-only", "loader-api", "managed-patch", "native-hook", "reimplementation", "decomp-recomp",
           "passthrough", "emulator", "other"]
@@ -47,6 +47,9 @@ def local_root() -> Path | None:
     here = Path(__file__).resolve().parents[1] / "knowledge"
     if (here / "TEMPLATE.md").exists():
         return here
+    bundled = Path(__file__).resolve().parent / "resources" / "knowledge"
+    if (bundled / "TEMPLATE.md").exists():
+        return bundled
     for d in [Path.cwd(), *Path.cwd().parents]:
         if (d / "knowledge" / "TEMPLATE.md").exists():
             return d / "knowledge"
@@ -75,7 +78,7 @@ def sync(quiet: bool = False) -> Path:
             dst.write_bytes(r.read())
     shutil.rmtree(root, ignore_errors=True)
     tmp.rename(root)
-    (root / ".synced").write_text(str(time.time()))
+    (root / ".synced").write_text(str(time.time()), encoding="utf-8")
     if not quiet:
         print(f"synced {len(paths)} files from github.com/{REPO} -> {root}")
     return root
@@ -91,7 +94,7 @@ def resolve_root(explicit: str | None = None, remote: bool = False) -> Path:
         return loc
     root = cache_root()
     stamp = root / ".synced"
-    stale = not stamp.exists() or time.time() - float(stamp.read_text() or 0) > 86400
+    stale = not stamp.exists() or time.time() - float(stamp.read_text(encoding="utf-8") or 0) > 86400
     if stale:
         try:
             return sync(quiet=True)
@@ -104,7 +107,7 @@ def resolve_root(explicit: str | None = None, remote: bool = False) -> Path:
 # --------------------------------------------------------------------------- notes
 
 def parse(path: Path) -> tuple[dict, str]:
-    text = path.read_text(errors="replace")
+    text = path.read_text(errors="replace", encoding="utf-8")
     m = re.match(r"^---\s*\n(.*?)\n---\s*\n?(.*)$", text, re.S)
     if not m:
         return {}, text
@@ -167,7 +170,7 @@ def search(root: Path, terms: list[str], game=None, engine=None, route=None, lim
 def check_note(path: Path, root: Path | None = None) -> tuple[list[str], list[str]]:
     from um.publish import DECOMP_PATTERNS, SECRET_PATTERNS
     fails, warns = [], []
-    text = path.read_text(errors="replace")
+    text = path.read_text(errors="replace", encoding="utf-8")
     meta, body = parse(path)
     if not meta:
         return [f"{path}: no YAML front matter (start the file with --- ... --- ; see knowledge/TEMPLATE.md)"], []
@@ -293,7 +296,7 @@ def new_note(root: Path, game: str | None, title: str, kind: str = "game", from_
     if path.exists():
         die(f"{path} exists")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"---\n{front}---\n{body}")
+    path.write_text(f"---\n{front}---\n{body}", encoding="utf-8")
     return path
 
 
@@ -334,8 +337,8 @@ def open_pr(path: Path, yes: bool):
     if not shutil.which("gh"):
         die("needs the GitHub CLI (gh) logged in; or push a branch and open the PR on github.com")
     idx, rows = build_index(root)
-    (root / "INDEX.md").write_text(idx)
-    (root / "index.json").write_text(json.dumps(rows, indent=1, default=str))
+    (root / "INDEX.md").write_text(idx, encoding="utf-8")
+    (root / "index.json").write_text(json.dumps(rows, indent=1, default=str), encoding="utf-8")
     for c in cmds:
         if c[:3] == ["um", "kb", "index"]:
             continue
@@ -377,7 +380,7 @@ def main(a):
             if not cands:
                 die(f"no note {a.note!r} in {root}")
             p = cands[0]
-        print(p.read_text())
+        print(p.read_text(encoding="utf-8"))
         return
     if c == "new":
         root = Path(a.root) if a.root else local_root()
@@ -400,7 +403,7 @@ def main(a):
             bad += bool(fails)
         if root and a.index and not a.paths:
             idx, _ = build_index(root)
-            if not (root / "INDEX.md").exists() or (root / "INDEX.md").read_text() != idx:
+            if not (root / "INDEX.md").exists() or (root / "INDEX.md").read_text(encoding="utf-8") != idx:
                 print("FAIL knowledge/INDEX.md is out of date: run `um kb index`")
                 bad += 1
         print(f"{'FAIL' if bad else 'PASS'}: {len(paths)} notes checked")
@@ -410,8 +413,8 @@ def main(a):
         if not root:
             die("no local knowledge/ folder")
         idx, rows = build_index(root)
-        (root / "INDEX.md").write_text(idx)
-        (root / "index.json").write_text(json.dumps(rows, indent=1, default=str) + "\n")
+        (root / "INDEX.md").write_text(idx, encoding="utf-8")
+        (root / "index.json").write_text(json.dumps(rows, indent=1, default=str) + "\n", encoding="utf-8")
         print(f"{root / 'INDEX.md'}: {len(rows)} notes")
         return
     if c == "pr":

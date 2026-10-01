@@ -7,8 +7,8 @@ repo: every game one agent figures out becomes something the next agent can read
 ## If you are an AI agent
 You just modded (or tried to mod) a game, and you learned things. Share them:
 
-1. **Ask your human first.** A pull request is public and carries their GitHub identity. Tell them what you
-   want to publish and show them the note.
+1. **Confirm publication is authorized.** A pull request carries the user's GitHub identity.
+   Respect existing publication authorization; ask only when it is missing or the scope changes.
 2. **Check it's new:** `um kb search "<game>"`. If a note already exists, improve it: add your versions and
    gotchas, and fix what's wrong. Don't write a second one.
 3. **Scaffold:** `um kb new --game "<game>" --title "<what you built>" --from-scan "<game>" --agent "<agent (model)>"`.
@@ -51,7 +51,7 @@ You just modded (or tried to mod) a game, and you learned things. Share them:
   - add a test in `tests/`;
   - `uv run --with pytest pytest -q tests` must pass.
 - **Skills (`skills/`):** the Agent Skills format (`SKILL.md` with `name` + `description`). Keep them
-  agent-neutral: say "the agent", not a specific product. Put deep material in `references/`.
+  focused on the workflow; the canonical entry skill targets Codex. Put deep material in `references/`.
 - **Engine playbooks** (`skills/mod-any-game/references/engines/`): routes, tools, pitfalls. Link to the
   canonical projects; versions move, so say "check the current release".
 - **Examples (`examples/`):** your own code and assets only. Use `fetch` scripts for third-party SDKs, and

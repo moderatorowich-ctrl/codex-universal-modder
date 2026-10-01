@@ -1,9 +1,0 @@
-{
-  "servers": {
-    "fal": {
-      "type": "http",
-      "url": "https://mcp.fal.ai/mcp",
-      "headers": { "Authorization": "Bearer ${env:FAL_KEY}" }
-    }
-  }
-}
