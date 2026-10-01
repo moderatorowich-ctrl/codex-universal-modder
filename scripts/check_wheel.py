@@ -31,7 +31,7 @@ from um import kb, doctor
 import um
 assert all(doctor.report()['required'].values())
 root = kb.local_root()
-assert root is not None and root.is_relative_to(Path(um.__file__).parent)
+assert root is not None and root.resolve().is_relative_to(Path(um.__file__).resolve().parent)
 assert kb.search(root, ['terraria'])
 print('Installed wheel: offline knowledge, modules and runtime assets verified')
 """
